@@ -39,7 +39,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctx = context.CreateAppContext(views.CreateAppView())
+	ctx = context.CreateAppContext(views.CreateViewContext())
 	ctx.DifmToken = token
 
 	run()

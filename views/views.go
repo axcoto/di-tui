@@ -13,8 +13,8 @@ type ViewContext struct {
 	App          *tview.Application
 	ChannelList  *tview.List
 	FavoriteList *tview.List
-	NowPlaying   *NowPlayingView
 	Keybindings  *KeybindingView
+	NowPlaying   *NowPlayingView
 }
 
 // KeybindingView is a custom view for dispalying the keyboard bindings available to users
@@ -25,41 +25,28 @@ type KeybindingView struct {
 
 // UIKeybinding is a helper struct for building a ControlsView
 type UIKeybinding struct {
-	Shortcut    string // a keybinding to bind to this control
 	Description string // a description of what the keybinding does
 	Func        func() // the funcion to execute when the binding is pressed
-}
-
-// CreateAppView creates the primary application view of di-tui
-func CreateAppView() *ViewContext {
-	return &ViewContext{
-		App:          tview.NewApplication(),
-		ChannelList:  createChannelList(),
-		FavoriteList: createFavoriteList(),
-		NowPlaying:   newNowPlaying(),
-		Keybindings:  createKeybindings(),
-	}
+	Shortcut    string // a keybinding to bind to this control
 }
 
 // NowPlayingView is a custom view for dispalying the currently playing channel
 type NowPlayingView struct {
 	*tview.Box
 	Channel *components.ChannelItem
-	Track   components.Track
 	Elapsed float64
+	Track   components.Track
 }
 
-func newNowPlaying() *NowPlayingView {
-	np := &NowPlayingView{
-		Box:     tview.NewBox(),
-		Channel: &components.ChannelItem{},
-		Elapsed: 0.0,
+// CreateAppView creates the primary application view of di-tui
+func CreateViewContext() *ViewContext {
+	return &ViewContext{
+		App:          tview.NewApplication(),
+		ChannelList:  createChannelList(),
+		FavoriteList: createFavoriteList(),
+		Keybindings:  createKeybindings(),
+		NowPlaying:   createNowPlaying(),
 	}
-
-	np.SetTitle(" Now Playing ")
-	np.SetBorder(true)
-
-	return np
 }
 
 // Draw draws a NowPlayingView onto the scren
@@ -104,6 +91,19 @@ func (n *KeybindingView) Draw(screen tcell.Screen) {
 			previousWidth = 0
 		}
 	}
+}
+
+func createNowPlaying() *NowPlayingView {
+	np := &NowPlayingView{
+		Box:     tview.NewBox(),
+		Channel: &components.ChannelItem{},
+		Elapsed: 0.0,
+	}
+
+	np.SetTitle(" Now Playing ")
+	np.SetBorder(true)
+
+	return np
 }
 
 func createChannelList() *tview.List {
