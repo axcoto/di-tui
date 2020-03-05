@@ -75,6 +75,7 @@ func buildUILayout() *tview.Flex {
 		AddItem(ctx.View.NowPlaying, 0, 4, false)
 
 	main.
+		AddItem(ctx.View.Status, 4, 0, false).
 		AddItem(flex, 0, 3, false).
 		AddItem(ctx.View.Keybindings, 4, 0, false)
 

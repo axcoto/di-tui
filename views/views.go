@@ -2,6 +2,7 @@ package views
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/acaloiaro/di-tui/components"
 	"github.com/gdamore/tcell"
@@ -15,6 +16,7 @@ type ViewContext struct {
 	FavoriteList *tview.List
 	Keybindings  *KeybindingView
 	NowPlaying   *NowPlayingView
+	Status       *StatusView
 }
 
 // KeybindingView is a custom view for dispalying the keyboard bindings available to users
@@ -38,7 +40,15 @@ type NowPlayingView struct {
 	Track   components.Track
 }
 
-// CreateAppView creates the primary application view of di-tui
+// StatusView shows temporary status messages in the application
+type StatusView struct {
+	*tview.Box
+	FadeDuration time.Duration // duration this view will fade, in/out of view
+	Message      string
+	ShowDuration time.Duration // duration this view will remain visible. 0 to keep open
+}
+
+// CreateViewContext creates the primary application view of di-tui
 func CreateViewContext() *ViewContext {
 	return &ViewContext{
 		App:          tview.NewApplication(),
@@ -46,6 +56,27 @@ func CreateViewContext() *ViewContext {
 		FavoriteList: createFavoriteList(),
 		Keybindings:  createKeybindings(),
 		NowPlaying:   createNowPlaying(),
+		Status:       createStatusView(),
+	}
+}
+
+// Draw draws the key bindings view on to the screen
+func (n *KeybindingView) Draw(screen tcell.Screen) {
+	n.Box.Draw(screen)
+	x, y, width, _ := n.GetInnerRect()
+
+	previousWidth := 0
+	for j, bnd := range n.Bindings {
+		line := fmt.Sprintf("(%s)[white] %s", bnd.Shortcut, bnd.Description)
+		tview.Print(screen, line, x+previousWidth, y, width, tview.AlignLeft, tcell.ColorBlue)
+		previousWidth += len(bnd.Shortcut) + len(bnd.Description) + 4
+
+		// virtically separate playback controls from ui controls
+		// yes, this is hacky, but there's a comment, so it's ok, right?
+		if j == 4 {
+			y = y + 1
+			previousWidth = 0
+		}
 	}
 }
 
@@ -71,39 +102,6 @@ func (n *NowPlayingView) Draw(screen tcell.Screen) {
 	elapsedStr := fmt.Sprintf("%02d:%02d", minutes, seconds)
 	line = fmt.Sprintf("%s[white] %s", "Elapsed:", elapsedStr)
 	tview.Print(screen, line, x, y+3, width, tview.AlignLeft, tcell.ColorBlue)
-}
-
-// Draw draws the key bindings view on to the screen
-func (n *KeybindingView) Draw(screen tcell.Screen) {
-	n.Box.Draw(screen)
-	x, y, width, _ := n.GetInnerRect()
-
-	previousWidth := 0
-	for j, bnd := range n.Bindings {
-		line := fmt.Sprintf("(%s)[white] %s", bnd.Shortcut, bnd.Description)
-		tview.Print(screen, line, x+previousWidth, y, width, tview.AlignLeft, tcell.ColorBlue)
-		previousWidth += len(bnd.Shortcut) + len(bnd.Description) + 4
-
-		// virtically separate playback controls from ui controls
-		// yes, this is hacky, but there's a comment, so it's ok, right?
-		if j == 4 {
-			y = y + 1
-			previousWidth = 0
-		}
-	}
-}
-
-func createNowPlaying() *NowPlayingView {
-	np := &NowPlayingView{
-		Box:     tview.NewBox(),
-		Channel: &components.ChannelItem{},
-		Elapsed: 0.0,
-	}
-
-	np.SetTitle(" Now Playing ")
-	np.SetBorder(true)
-
-	return np
 }
 
 func createChannelList() *tview.List {
@@ -133,4 +131,26 @@ func createKeybindings() *KeybindingView {
 		SetTitle(" Key Bindings ")
 
 	return kbv
+}
+
+func createNowPlaying() *NowPlayingView {
+	np := &NowPlayingView{
+		Box:     tview.NewBox(),
+		Channel: &components.ChannelItem{},
+		Elapsed: 0.0,
+	}
+
+	np.SetTitle(" Now Playing ")
+	np.SetBorder(true)
+
+	return np
+}
+
+func createStatusView() *StatusView {
+	return &StatusView{
+		Box:          tview.NewBox(),
+		FadeDuration: time.Second * 1,
+		Message:      "Hello world",
+		ShowDuration: time.Second * 0,
+	}
 }
